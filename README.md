@@ -7,7 +7,7 @@ You can run `wsync` in two modes:
 ```sh
 cargo run <git-repository path> <file/folder-to-sync path>
 ```
-### sync current state and watch for changes
+### sync current state and watch changes
 ```sh
 cargo run <git-repository path> <file/folder-to-sync path> --watch
 ```
