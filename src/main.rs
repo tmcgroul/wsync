@@ -31,11 +31,13 @@ fn main() {
         watch: watch,
     };
 
-    if !Path::new("./sync-repository").exists() {
+    let local_repository = format!("{}/.wsync/sync-repository", std::env::var("HOME").unwrap());
+    if !Path::new(&local_repository).exists() {
+        println!("{}", local_repository);
         Command::new("git")
                 .arg("clone")
                 .arg(&args.repository)
-                .arg("sync-repository")
+                .arg(&local_repository)
                 .status()
                 .unwrap();
     }
@@ -48,7 +50,7 @@ fn main() {
             match rx.recv() {
                 Ok(event) => {
                     match event {
-                        DebouncedEvent::Write(path) => sync(&path),
+                        DebouncedEvent::Write(path) => sync(&path, &local_repository),
                         _ => (),
                     }
                 },
@@ -56,17 +58,17 @@ fn main() {
             }
         }
     } else {
-        sync(&args.path)
+        sync(&args.path, &local_repository)
     }
 }
 
-fn sync(path: &PathBuf) {
-    let file_name = path.file_name().unwrap().to_str().unwrap();
-    let path_to = format!("./sync-repository/{}", file_name);
-    fs::copy(&path, path_to).unwrap();
+fn sync(file_path: &PathBuf, local_repository: &String) {
+    let file_name = file_path.file_name().unwrap().to_str().unwrap();
+    let path_to = format!("{}/{}", &local_repository, file_name);
+    fs::copy(&file_path, path_to).unwrap();
     Command::new("git")
             .arg("-C")
-            .arg("./sync-repository")
+            .arg(&local_repository)
             .arg("add")
             .arg(".")
             .status()
@@ -74,7 +76,7 @@ fn sync(path: &PathBuf) {
 
     Command::new("git")
             .arg("-C")
-            .arg("./sync-repository")
+            .arg(&local_repository)
             .arg("commit")
             .arg("-m")
             .arg(format!("Sync {}", file_name))
@@ -83,7 +85,7 @@ fn sync(path: &PathBuf) {
 
     Command::new("git")
             .arg("-C")
-            .arg("./sync-repository")
+            .arg(&local_repository)
             .arg("push")
             .arg("origin")
             .arg("master")
