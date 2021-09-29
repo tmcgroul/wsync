@@ -8,13 +8,15 @@ use notify::{DebouncedEvent, Watcher, RecursiveMode, watcher};
 struct Cli {
     repository: String,
     path: PathBuf,
+    alias: String,
     watch: bool,
 }
 
 fn main() {
     let repository = std::env::args().nth(1).expect("no repository given");
     let path = std::env::args().nth(2).expect("no path (file or folder) given");
-    let watch: bool = match std::env::args().nth(3) {
+    let alias = std::env::args().nth(3).expect("no alias given");
+    let watch: bool = match std::env::args().nth(4) {
         Some(v) => {
             if v == "--watch" {
                 true
@@ -28,6 +30,7 @@ fn main() {
     let args = Cli {
         repository: repository,
         path: PathBuf::from(path),
+        alias: alias,
         watch: watch,
     };
 
@@ -50,7 +53,7 @@ fn main() {
             match rx.recv() {
                 Ok(event) => {
                     match event {
-                        DebouncedEvent::Write(path) => sync(&path, &local_repository),
+                        DebouncedEvent::Write(path) => sync(&path, &args.alias, &local_repository),
                         _ => (),
                     }
                 },
@@ -58,13 +61,12 @@ fn main() {
             }
         }
     } else {
-        sync(&args.path, &local_repository)
+        sync(&args.path, &args.alias, &local_repository)
     }
 }
 
-fn sync(file_path: &PathBuf, local_repository: &String) {
-    let file_name = file_path.file_name().unwrap().to_str().unwrap();
-    let path_to = format!("{}/{}", &local_repository, file_name);
+fn sync(file_path: &PathBuf, alias: &String, local_repository: &String) {
+    let path_to = format!("{}/{}", &local_repository, &alias);
     fs::copy(&file_path, path_to).unwrap();
     Command::new("git")
             .arg("-C")
@@ -79,7 +81,7 @@ fn sync(file_path: &PathBuf, local_repository: &String) {
             .arg(&local_repository)
             .arg("commit")
             .arg("-m")
-            .arg(format!("Sync {}", file_name))
+            .arg(format!("Sync {}", &alias))
             .status()
             .unwrap();
 

@@ -5,14 +5,14 @@ A tool for workplace syncronization. It uses git as a version control system to 
 You can run `wsync` in two modes:
 ### sync current state and exit
 ```sh
-cargo run <git-repository path> <file/folder-to-sync path>
+cargo run <git-repository path> <file/folder-to-sync path> <alias>
 ```
 ### sync current state and watch changes
 ```sh
-cargo run <git-repository path> <file/folder-to-sync path> --watch
+cargo run <git-repository path> <file/folder-to-sync path> <alias> --watch
 ```
 
 # Example
 ```sh
-cargo run git@github.com:tmcgroul/workplace-config.git /home/sar/.config/terminator/config
+cargo run git@github.com:tmcgroul/workplace-config.git /home/sar/.config/terminator/config terminator
 ```
