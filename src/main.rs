@@ -2,8 +2,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::mpsc::channel;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use notify::{DebouncedEvent, Watcher, RecursiveMode, watcher};
+
+mod meta;
 
 struct Cli {
     repository: String,
@@ -36,13 +38,15 @@ fn main() {
 
     let local_repository = format!("{}/.wsync/sync-repository", std::env::var("HOME").unwrap());
     if !Path::new(&local_repository).exists() {
-        println!("{}", local_repository);
         Command::new("git")
                 .arg("clone")
                 .arg(&args.repository)
                 .arg(&local_repository)
                 .status()
                 .unwrap();
+        if !meta::Meta::exists(&local_repository) {
+            meta::Meta::create(&local_repository);
+        }
     }
 
     if args.watch {
@@ -66,8 +70,14 @@ fn main() {
 }
 
 fn sync(file_path: &PathBuf, alias: &String, local_repository: &String) {
+    let metadata = fs::metadata(&file_path).unwrap();
+    let modified = metadata.modified().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+    let mut meta = meta::Meta::from(&local_repository);
+    meta.update(&alias, modified);
+
     let path_to = format!("{}/{}", &local_repository, &alias);
     fs::copy(&file_path, path_to).unwrap();
+
     Command::new("git")
             .arg("-C")
             .arg(&local_repository)
