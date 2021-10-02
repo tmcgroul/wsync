@@ -1,51 +1,40 @@
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
+use std::fs::{File, write, read_to_string};
 use std::path::Path;
 use std::collections::HashMap;
 
 pub struct Meta {
-    file: File,
+    path: String,
 }
 
 impl Meta {
-    pub fn from(path: &String) -> Meta {
-        let file_path = format!("{}/meta.txt", path);
+    pub fn from(folder: &String) -> Meta {
         Meta {
-            file: OpenOptions::new()
-                .read(true)
-                .write(true)
-                .open(&file_path)
-                .unwrap(),
+            path: format!("{}/meta.txt", folder),
         }
     }
 
-    pub fn exists(path: &String) -> bool {
-        let file_path = format!("{}/meta.txt", path);
+    pub fn exists(folder: &String) -> bool {
+        let file_path = format!("{}/meta.txt", folder);
         Path::new(&file_path).exists()
     }
 
-    pub fn create(path: &String) -> Meta {
-        let file_path = format!("{}/meta.txt", path);
+    pub fn create(folder: &String) -> Meta {
+        let file_path = format!("{}/meta.txt", folder);
+        File::create(&file_path).unwrap();
         Meta {
-            file: OpenOptions::new()
-                .create(true)
-                .read(true)
-                .write(true)
-                .open(&file_path)
-                .unwrap(),
+            path: file_path,
         }
     }
 
-    pub fn update(&mut self, key: &String, value: u64) {
+    pub fn update(&self, key: &String, value: u64) {
         let mut data = self.read();
         data.insert(key.clone(), value);
         self.write(&data);
     }
 
-    fn read(&mut self) -> HashMap<String, u64> {
+    fn read(&self) -> HashMap<String, u64> {
         let mut data = HashMap::new();
-        let mut content = String::new();
-        self.file.read_to_string(&mut content).unwrap();
+        let content = read_to_string(&self.path).unwrap();
 
         let mut key = String::new();
         let mut value = String::new();
@@ -66,14 +55,13 @@ impl Meta {
         data
     }
 
-    fn write(&mut self, data: &HashMap<String, u64>) {
+    fn write(&self, data: &HashMap<String, u64>) {
         let mut content = String::new();
         for (key, value) in data.iter() {
             content.push_str(&key);
             content.push('=');
             content.push_str(&value.to_string());
         }
-        self.file.set_len(0).unwrap();
-        self.file.write(content.as_bytes()).unwrap();
+        write(&self.path, content).unwrap();
     }
 }

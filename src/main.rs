@@ -72,7 +72,7 @@ fn main() {
 fn sync(file_path: &PathBuf, alias: &String, local_repository: &String) {
     let metadata = fs::metadata(&file_path).unwrap();
     let modified = metadata.modified().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
-    let mut meta = meta::Meta::from(&local_repository);
+    let meta = meta::Meta::from(&local_repository);
     meta.update(&alias, modified);
 
     let path_to = format!("{}/{}", &local_repository, &alias);
