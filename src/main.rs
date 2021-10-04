@@ -30,10 +30,10 @@ fn main() {
     };
 
     let args = Cli {
-        repository: repository,
         path: PathBuf::from(path),
-        alias: alias,
-        watch: watch,
+        repository,
+        alias,
+        watch,
     };
 
     let local_repository = format!("{}/.wsync/sync-repository", std::env::var("HOME").unwrap());
@@ -56,9 +56,8 @@ fn main() {
         loop {
             match rx.recv() {
                 Ok(event) => {
-                    match event {
-                        DebouncedEvent::Write(path) => sync(&path, &args.alias, &local_repository),
-                        _ => (),
+                    if let DebouncedEvent::Write(path) = event {
+                        sync(&path, &args.alias, &local_repository);
                     }
                 },
                 Err(e) => println!("watch error: {:?}", e),
@@ -69,11 +68,11 @@ fn main() {
     }
 }
 
-fn sync(file_path: &PathBuf, alias: &String, local_repository: &String) {
+fn sync(file_path: &Path, alias: &str, local_repository: &str) {
     let metadata = fs::metadata(&file_path).unwrap();
     let modified = metadata.modified().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
-    let meta = meta::Meta::from(&local_repository);
-    meta.update(&alias, modified);
+    let meta = meta::Meta::from(local_repository);
+    meta.update(alias, modified);
 
     let path_to = format!("{}/{}", &local_repository, &alias);
     fs::copy(&file_path, path_to).unwrap();

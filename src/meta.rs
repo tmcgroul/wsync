@@ -7,18 +7,18 @@ pub struct Meta {
 }
 
 impl Meta {
-    pub fn from(folder: &String) -> Meta {
+    pub fn from(folder: &str) -> Meta {
         Meta {
             path: format!("{}/meta.txt", folder),
         }
     }
 
-    pub fn exists(folder: &String) -> bool {
+    pub fn exists(folder: &str) -> bool {
         let file_path = format!("{}/meta.txt", folder);
         Path::new(&file_path).exists()
     }
 
-    pub fn create(folder: &String) -> Meta {
+    pub fn create(folder: &str) -> Meta {
         let file_path = format!("{}/meta.txt", folder);
         File::create(&file_path).unwrap();
         Meta {
@@ -26,9 +26,9 @@ impl Meta {
         }
     }
 
-    pub fn update(&self, key: &String, value: u64) {
+    pub fn update(&self, key: &str, value: u64) {
         let mut data = self.read();
-        data.insert(key.clone(), value);
+        data.insert(key.to_string(), value);
         self.write(&data);
     }
 
@@ -58,7 +58,7 @@ impl Meta {
     fn write(&self, data: &HashMap<String, u64>) {
         let mut content = String::new();
         for (key, value) in data.iter() {
-            content.push_str(&key);
+            content.push_str(key);
             content.push('=');
             content.push_str(&value.to_string());
         }

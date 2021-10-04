@@ -16,3 +16,9 @@ cargo run <git-repository path> <file/folder-to-sync path> <alias> --watch
 ```sh
 cargo run git@github.com:tmcgroul/workplace-config.git /home/sar/.config/terminator/config terminator
 ```
+
+# Development
+It's required to install [pre-commit](https://pre-commit.com/#3-install-the-git-hook-scripts) after git clone
+```sh
+pre-commit install
+```
