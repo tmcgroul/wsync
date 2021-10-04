@@ -1,6 +1,6 @@
-use std::fs::{File, write, read_to_string};
-use std::path::Path;
 use std::collections::HashMap;
+use std::fs::{read_to_string, write, File};
+use std::path::Path;
 
 pub struct Meta {
     path: String,
@@ -21,9 +21,7 @@ impl Meta {
     pub fn create(folder: &str) -> Meta {
         let file_path = format!("{}/meta.txt", folder);
         File::create(&file_path).unwrap();
-        Meta {
-            path: file_path,
-        }
+        Meta { path: file_path }
     }
 
     pub fn update(&self, key: &str, value: u64) {

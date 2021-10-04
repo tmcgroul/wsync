@@ -1,9 +1,9 @@
+use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::mpsc::channel;
 use std::time::{Duration, SystemTime};
-use notify::{DebouncedEvent, Watcher, RecursiveMode, watcher};
 
 mod meta;
 
@@ -16,7 +16,9 @@ struct Cli {
 
 fn main() {
     let repository = std::env::args().nth(1).expect("no repository given");
-    let path = std::env::args().nth(2).expect("no path (file or folder) given");
+    let path = std::env::args()
+        .nth(2)
+        .expect("no path (file or folder) given");
     let alias = std::env::args().nth(3).expect("no alias given");
     let watch: bool = match std::env::args().nth(4) {
         Some(v) => {
@@ -25,8 +27,8 @@ fn main() {
             } else {
                 panic!("unexpected argument {}", v)
             }
-        },
-        None => false
+        }
+        None => false,
     };
 
     let args = Cli {
@@ -39,11 +41,11 @@ fn main() {
     let local_repository = format!("{}/.wsync/sync-repository", std::env::var("HOME").unwrap());
     if !Path::new(&local_repository).exists() {
         Command::new("git")
-                .arg("clone")
-                .arg(&args.repository)
-                .arg(&local_repository)
-                .status()
-                .unwrap();
+            .arg("clone")
+            .arg(&args.repository)
+            .arg(&local_repository)
+            .status()
+            .unwrap();
         if !meta::Meta::exists(&local_repository) {
             meta::Meta::create(&local_repository);
         }
@@ -59,7 +61,7 @@ fn main() {
                     if let DebouncedEvent::Write(path) = event {
                         sync(&path, &args.alias, &local_repository);
                     }
-                },
+                }
                 Err(e) => println!("watch error: {:?}", e),
             }
         }
@@ -70,7 +72,12 @@ fn main() {
 
 fn sync(file_path: &Path, alias: &str, local_repository: &str) {
     let metadata = fs::metadata(&file_path).unwrap();
-    let modified = metadata.modified().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+    let modified = metadata
+        .modified()
+        .unwrap()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
     let meta = meta::Meta::from(local_repository);
     meta.update(alias, modified);
 
@@ -78,28 +85,28 @@ fn sync(file_path: &Path, alias: &str, local_repository: &str) {
     fs::copy(&file_path, path_to).unwrap();
 
     Command::new("git")
-            .arg("-C")
-            .arg(&local_repository)
-            .arg("add")
-            .arg(".")
-            .status()
-            .unwrap();
+        .arg("-C")
+        .arg(&local_repository)
+        .arg("add")
+        .arg(".")
+        .status()
+        .unwrap();
 
     Command::new("git")
-            .arg("-C")
-            .arg(&local_repository)
-            .arg("commit")
-            .arg("-m")
-            .arg(format!("Sync {}", &alias))
-            .status()
-            .unwrap();
+        .arg("-C")
+        .arg(&local_repository)
+        .arg("commit")
+        .arg("-m")
+        .arg(format!("Sync {}", &alias))
+        .status()
+        .unwrap();
 
     Command::new("git")
-            .arg("-C")
-            .arg(&local_repository)
-            .arg("push")
-            .arg("origin")
-            .arg("master")
-            .status()
-            .unwrap();
+        .arg("-C")
+        .arg(&local_repository)
+        .arg("push")
+        .arg("origin")
+        .arg("master")
+        .status()
+        .unwrap();
 }
