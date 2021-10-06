@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::time::SystemTime;
 
 pub mod meta;
@@ -64,6 +64,7 @@ pub fn sync(file_path: &Path, alias: &str, local_repository: &str) {
         .arg("commit")
         .arg("-m")
         .arg(format!("Sync {}", &alias))
+        .stdout(Stdio::null())
         .status()
         .unwrap();
 
@@ -73,6 +74,7 @@ pub fn sync(file_path: &Path, alias: &str, local_repository: &str) {
         .arg("push")
         .arg("origin")
         .arg("master")
+        .stdout(Stdio::null())
         .status()
         .unwrap();
 }

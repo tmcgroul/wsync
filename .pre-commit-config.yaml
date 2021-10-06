@@ -13,3 +13,8 @@ repos:
         language: system
         types: [rust]
         args: ["--"]
+    -   id: tests
+        name: tests
+        entry: cargo test
+        language: system
+        pass_filenames: false
