@@ -37,6 +37,12 @@ impl Cli {
 }
 
 pub fn sync(file_path: &Path, alias: &str, local_repository: &str) {
+    Command::new("git")
+        .args(["-C", local_repository, "pull", "origin", "master"])
+        .stdout(Stdio::null())
+        .status()
+        .unwrap();
+
     let metadata = fs::metadata(&file_path).unwrap();
     let modified = metadata
         .modified()
@@ -45,36 +51,31 @@ pub fn sync(file_path: &Path, alias: &str, local_repository: &str) {
         .unwrap()
         .as_secs();
     let meta = meta::Meta::from(local_repository);
-    meta.update(alias, modified);
+    let remote_modified = meta.get(alias);
 
-    let path_to = format!("{}/{}", &local_repository, &alias);
-    fs::copy(&file_path, path_to).unwrap();
+    let repository_file_path = format!("{}/{}", &local_repository, &alias);
+    if remote_modified.is_some() && remote_modified.unwrap() > modified {
+        fs::copy(repository_file_path, &file_path).unwrap();
+    } else {
+        meta.update(alias, modified);
+        fs::copy(&file_path, repository_file_path).unwrap();
 
-    Command::new("git")
-        .arg("-C")
-        .arg(&local_repository)
-        .arg("add")
-        .arg(".")
-        .status()
-        .unwrap();
+        Command::new("git")
+            .args(["-C", local_repository, "add", "."])
+            .status()
+            .unwrap();
 
-    Command::new("git")
-        .arg("-C")
-        .arg(&local_repository)
-        .arg("commit")
-        .arg("-m")
-        .arg(format!("Sync {}", &alias))
-        .stdout(Stdio::null())
-        .status()
-        .unwrap();
+        let message = format!("Sync {}", &alias);
+        Command::new("git")
+            .args(["-C", local_repository, "commit", "-m", &message])
+            .stdout(Stdio::null())
+            .status()
+            .unwrap();
 
-    Command::new("git")
-        .arg("-C")
-        .arg(&local_repository)
-        .arg("push")
-        .arg("origin")
-        .arg("master")
-        .stdout(Stdio::null())
-        .status()
-        .unwrap();
+        Command::new("git")
+            .args(["-C", local_repository, "push", "origin", "master"])
+            .stdout(Stdio::null())
+            .status()
+            .unwrap();
+    }
 }

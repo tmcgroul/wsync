@@ -24,6 +24,11 @@ impl Meta {
         Meta { path: file_path }
     }
 
+    pub fn get(&self, key: &str) -> Option<u64> {
+        let data = self.read();
+        data.get(key).copied()
+    }
+
     pub fn update(&self, key: &str, value: u64) {
         let mut data = self.read();
         data.insert(key.to_string(), value);
@@ -37,17 +42,22 @@ impl Meta {
         let mut key = String::new();
         let mut value = String::new();
         let mut target = &mut key;
-        for token in content.chars() {
-            if token == '=' {
-                target = &mut value;
-            } else if token == '\n' {
-                data.insert(key.clone(), value.clone().parse::<u64>().unwrap());
-                key.clear();
-                value.clear();
-                target = &mut key;
-            } else {
-                target.push(token);
+        for line in content.split('\n') {
+            if line.is_empty() {
+                continue;
             }
+
+            for token in line.chars() {
+                if token == '=' {
+                    target = &mut value;
+                } else {
+                    target.push(token);
+                }
+            }
+            data.insert(key.clone(), value.clone().parse::<u64>().unwrap());
+            key.clear();
+            value.clear();
+            target = &mut key;
         }
 
         data

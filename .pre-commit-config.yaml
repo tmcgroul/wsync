@@ -17,4 +17,5 @@ repos:
         name: tests
         entry: cargo test
         language: system
+        args: ["--", "--test-threads=1"]
         pass_filenames: false
